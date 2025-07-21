@@ -1,5 +1,5 @@
 import os
-from langchain_community.llms import HuggingFaceEndpoint
+from langchain_community.llms import HuggingFaceHub
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
@@ -7,12 +7,10 @@ from langchain.agents import initialize_agent
 # Set your Hugging Face API token directly or from environment
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")  # Assumes token is set in Streamlit secrets or env
 
-# Correct HuggingFaceEndpoint initialization (with validated params)
-llm = HuggingFaceEndpoint(
+# Correct HuggingFaceHub initialization (public model usage)
+llm = HuggingFaceHub(
     repo_id="google/flan-t5-xl",
-    task="text2text-generation",
-    temperature=0.0,
-    max_new_tokens=512,
+    model_kwargs={"temperature": 0.0, "max_new_tokens": 512}
 )
 
 # Setup database

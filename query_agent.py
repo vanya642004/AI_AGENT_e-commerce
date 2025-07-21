@@ -1,21 +1,22 @@
 import os
 import pandas as pd
 import sqlite3
-from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
+from langchain_huggingface import HuggingFaceEndpoint  # ✅ Use supported import
 
 # Set Hugging Face API token
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = "your_hf_token_here"  # Or set it in environment
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# ✅ Fix: Remove 'task', use only supported parameters for HuggingFaceEndpoint
+# ✅ Setup Hugging Face LLM endpoint correctly
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
-    model_kwargs={"temperature": 0.7, "max_length": 512}
+    temperature=0.7,             # ✅ Pass as top-level param
+    max_length=512               # ✅ Avoid model_kwargs dict
 )
 
-# ✅ Initialize database from CSVs
+# ✅ Create SQLite database from CSV if it doesn't exist
 if not os.path.exists("ecommerce.db"):
     conn = sqlite3.connect("ecommerce.db")
     csv_files = ["data/total_sales.csv", "data/ad_sales.csv", "data/eligibility.csv"]
@@ -27,14 +28,14 @@ if not os.path.exists("ecommerce.db"):
     conn.commit()
     conn.close()
 
-# ✅ Connect LangChain SQL agent to local DB
+# ✅ Setup LangChain SQL database
 try:
     db = SQLDatabase.from_uri("sqlite:///ecommerce.db")
     toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 except Exception as e:
     raise RuntimeError(f"Database connection failed: {e}")
 
-# ✅ Initialize Agent
+# ✅ Initialize SQL agent
 try:
     agent_executor = initialize_agent(
         tools=toolkit.get_tools(),
@@ -45,7 +46,7 @@ try:
 except Exception as e:
     raise RuntimeError("Agent initialization failed. Check LLM and tools.") from e
 
-# ✅ Main querying function
+# ✅ Final query handler
 def answer_query(question: str) -> str:
     try:
         return agent_executor.run(question)

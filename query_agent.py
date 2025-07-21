@@ -2,28 +2,30 @@ import os
 from langchain_community.llms import HuggingFaceEndpoint
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain.agents import initialize_agent
+from langchain.chains import LLMChain
+from langchain.prompts import PromptTemplate
 
-# Set your Hugging Face API token as an environment variable (or via Streamlit Cloud secrets)
+# Set your Hugging Face API token as an environment variable
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Initialize HuggingFace endpoint model
+# Use chat-compatible model
 llm = HuggingFaceEndpoint(
-    repo_id="google/flan-t5-xl",
-    task="text2text-generation",
-    temperature=0.0,
-    max_length=512
+    repo_id="HuggingFaceH4/zephyr-7b-beta",
+    task="text-generation",
+    model_kwargs={"temperature": 0.7, "max_new_tokens": 512},
 )
 
-# Setup database and agent
+# Setup database
 db = SQLDatabase.from_uri("sqlite:///ecommerce.db")
 toolkit = SQLDatabaseToolkit(db=db, llm=llm)
-agent_executor = initialize_agent(
-    tools=toolkit.get_tools(),
-    llm=llm,
-    agent="zero-shot-react-description",
-    verbose=False
-)
+
+# Prompt template for direct SQL-powered QA
+template = """Use the SQL database to answer the question:
+{question}"""
+prompt = PromptTemplate(input_variables=["question"], template=template)
+
+# Create LLMChain
+chain = LLMChain(llm=llm, prompt=prompt)
 
 def answer_query(question: str) -> str:
-    return agent_executor.run(question)
+    return chain.run(question)

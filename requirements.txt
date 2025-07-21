@@ -1,9 +1,7 @@
-fastapi
-uvicorn
-pandas
 streamlit
-langchain
-langchain-community
-langchain-huggingface
+pandas
+sqlite-utils
+langchain==0.3.26
+langchain-community==0.3.27
+langchain-huggingface==0.3.0
 huggingface_hub
-sqlite3-binary

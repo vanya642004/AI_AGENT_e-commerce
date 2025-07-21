@@ -4,15 +4,14 @@ from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
 
-# Set your Hugging Face API token directly or from environment
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")  # Assumes token is set in Streamlit secrets or env
+# Set your Hugging Face API token directly
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Use a chat-compatible model
+# Correct HuggingFaceEndpoint configuration
 llm = HuggingFaceEndpoint(
     repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
     task="text-generation",
-    temperature=0.7,
-    max_new_tokens=512
+    model_kwargs={"temperature": 0.7, "max_new_tokens": 512}  # pass inside model_kwargs
 )
 
 # Setup database
@@ -30,11 +29,11 @@ try:
         agent="zero-shot-react-description",
         verbose=True,
     )
-except AttributeError as e:
-    raise AttributeError("Agent initialization failed. Likely LLM misconfiguration.") from e
+except Exception as e:
+    raise RuntimeError("Agent initialization failed. Check LLM configuration and tool setup.") from e
 
 def answer_query(question: str) -> str:
     try:
         return agent_executor.run(question)
-    except AttributeError as e:
-        raise AttributeError("Query execution failed due to misconfigured agent or inputs.") from e
+    except Exception as e:
+        raise RuntimeError("Query execution failed. Ensure prompt and LLM are correctly aligned.") from e

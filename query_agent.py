@@ -7,12 +7,14 @@ from langchain.agents import initialize_agent
 # Set your Hugging Face API token as an environment variable
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Initialize HuggingFace LLM (pass parameters directly, not via model_kwargs)
+# Initialize HuggingFace LLM (correct usage with model_kwargs)
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
     task="text2text-generation",
-    temperature=0.0,
-    max_new_tokens=512,
+    model_kwargs={
+        "temperature": 0.0,
+        "max_new_tokens": 512
+    },
 )
 
 # Setup database
@@ -29,4 +31,3 @@ agent_executor = initialize_agent(
 
 def answer_query(question: str) -> str:
     return agent_executor.run(question)
-

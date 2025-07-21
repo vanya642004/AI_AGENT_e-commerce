@@ -1,6 +1,6 @@
 from langchain_community.llms import HuggingFaceHub
-from langchain.utilities import SQLDatabase
-from langchain.agents.agent_toolkits import SQLDatabaseToolkit
+from langchain_community.utilities import SQLDatabase
+from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
 import os
 

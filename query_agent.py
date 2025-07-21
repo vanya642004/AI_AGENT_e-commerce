@@ -7,11 +7,11 @@ from langchain.agents import initialize_agent
 # Set your Hugging Face API token directly or from environment
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")  # Assumes token is set in Streamlit secrets or env
 
-# Correct HuggingFaceEndpoint initialization (pass parameters explicitly)
+# Use a chat-compatible model
 llm = HuggingFaceEndpoint(
-    repo_id="google/flan-t5-xl",
-    task="text2text-generation",
-    temperature=0.0,
+    repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
+    task="text-generation",
+    temperature=0.7,
     max_new_tokens=512
 )
 

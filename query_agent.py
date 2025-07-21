@@ -9,6 +9,7 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 llm = HuggingFaceHub(
     repo_id="google/flan-t5-xl",
+    task="text2text-generation",
     model_kwargs={"temperature": 0.0, "max_length": 512}
 )
 

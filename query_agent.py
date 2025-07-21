@@ -7,7 +7,14 @@ from langchain.agents import initialize_agent
 # Set your Hugging Face API token directly
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Correct HuggingFaceEndpoint configuration with explicit parameters (not via model_kwargs)
+# Updated prompt formatting to work with instruction-tuned models
+instruction_prefix = "<s>[INST]"
+instruction_suffix = "[/INST]"
+
+def format_prompt(question):
+    return f"{instruction_prefix} {question.strip()} {instruction_suffix}"
+
+# Correct HuggingFaceEndpoint configuration with explicit parameters
 llm = HuggingFaceEndpoint(
     repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
     task="text-generation",
@@ -35,6 +42,7 @@ except Exception as e:
 
 def answer_query(question: str) -> str:
     try:
-        return agent_executor.run(question)
+        prompt = format_prompt(question)
+        return agent_executor.run(prompt)
     except Exception as e:
         raise RuntimeError("Query execution failed. Ensure prompt and LLM are correctly aligned.") from e

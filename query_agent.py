@@ -9,19 +9,11 @@ from langchain.agents import initialize_agent
 # Set Hugging Face API token
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Prompt wrappers for instruction tuning
-instruction_prefix = "<s>[INST]"
-instruction_suffix = "[/INST]"
-
-def format_prompt(question):
-    return f"{instruction_prefix} {question.strip()} {instruction_suffix}"
-
-# Setup HF endpoint
+# Setup Hugging Face LLM endpoint
 llm = HuggingFaceEndpoint(
     repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
     task="text-generation",
-    temperature=0.7,
-    max_new_tokens=512
+    model_kwargs={"temperature": 0.7, "max_new_tokens": 512}
 )
 
 # Create SQLite database from CSV if it doesn't exist
@@ -56,7 +48,6 @@ except Exception as e:
 
 def answer_query(question: str) -> str:
     try:
-        prompt = format_prompt(question)
-        return agent_executor.run(prompt)
+        return agent_executor.run(question)
     except Exception as e:
         raise RuntimeError("Query execution failed. Ensure prompt and LLM are correctly aligned.") from e

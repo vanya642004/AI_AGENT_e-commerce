@@ -12,7 +12,7 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 # ✅ Setup Hugging Face LLM endpoint correctly
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
-    temperature=0.7  # ✅ Valid argument, removed invalid ones
+    temperature=0.7
 )
 
 # ✅ Create SQLite database from CSV if it doesn't exist
@@ -41,6 +41,7 @@ try:
         llm=llm,
         agent="zero-shot-react-description",
         verbose=True,
+        handle_parsing_errors=True  # ✅ Added to prevent StopIteration from crashing
     )
 except Exception as e:
     raise RuntimeError("Agent initialization failed. Check LLM and tools.") from e

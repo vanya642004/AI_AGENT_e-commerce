@@ -3,5 +3,7 @@ uvicorn
 pandas
 streamlit
 langchain
-huggingface-hub
 langchain-community
+langchain-huggingface
+huggingface_hub
+sqlite3-binary

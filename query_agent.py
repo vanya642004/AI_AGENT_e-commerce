@@ -4,30 +4,37 @@ from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
 
-# Set your Hugging Face API token as an environment variable
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+# Set your Hugging Face API token directly or from environment
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")  # Assumes token is set in Streamlit secrets or env
 
-# Initialize HuggingFace LLM (correct usage with model_kwargs)
+# Correct HuggingFaceEndpoint initialization (with validated params)
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
     task="text2text-generation",
-    model_kwargs={
-        "temperature": 0.0,
-        "max_new_tokens": 512
-    },
+    temperature=0.0,
+    max_new_tokens=512,
 )
 
 # Setup database
-db = SQLDatabase.from_uri("sqlite:///ecommerce.db")
-toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+try:
+    db = SQLDatabase.from_uri("sqlite:///ecommerce.db")
+    toolkit = SQLDatabaseToolkit(db=db, llm=llm)
+except Exception as e:
+    raise RuntimeError(f"Database connection failed: {e}")
 
 # Initialize agent with the SQL toolkit
-agent_executor = initialize_agent(
-    tools=toolkit.get_tools(),
-    llm=llm,
-    agent="zero-shot-react-description",
-    verbose=True,
-)
+try:
+    agent_executor = initialize_agent(
+        tools=toolkit.get_tools(),
+        llm=llm,
+        agent="zero-shot-react-description",
+        verbose=True,
+    )
+except AttributeError as e:
+    raise AttributeError("Agent initialization failed. Likely LLM misconfiguration.") from e
 
 def answer_query(question: str) -> str:
-    return agent_executor.run(question)
+    try:
+        return agent_executor.run(question)
+    except AttributeError as e:
+        raise AttributeError("Query execution failed due to misconfigured agent or inputs.") from e

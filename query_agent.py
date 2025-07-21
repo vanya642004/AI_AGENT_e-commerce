@@ -7,11 +7,12 @@ from langchain.agents import initialize_agent
 # Set your Hugging Face API token directly
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Correct HuggingFaceEndpoint configuration
+# Correct HuggingFaceEndpoint configuration with explicit parameters (not via model_kwargs)
 llm = HuggingFaceEndpoint(
     repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
     task="text-generation",
-    model_kwargs={"temperature": 0.7, "max_new_tokens": 512}  # pass inside model_kwargs
+    temperature=0.7,
+    max_new_tokens=512
 )
 
 # Setup database

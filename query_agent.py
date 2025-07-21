@@ -11,15 +11,15 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 # Setup Hugging Face LLM endpoint
 llm = HuggingFaceEndpoint(
-    repo_id="mistralai/Mixtral-8x7B-Instruct-v0.1",
-    task="text-generation",
-    model_kwargs={"temperature": 0.7, "max_new_tokens": 512}
+    repo_id="google/flan-t5-xl",  # Changed to a compatible model
+    task="text2text-generation",
+    model_kwargs={"temperature": 0.7, "max_length": 512}  # flan-t5 uses max_length not max_new_tokens
 )
 
 # Create SQLite database from CSV if it doesn't exist
 if not os.path.exists("ecommerce.db"):
     conn = sqlite3.connect("ecommerce.db")
-    csv_files = ["total_sales.csv", "ad_sales.csv", "eligibility.csv"]
+    csv_files = ["data/total_sales.csv", "data/ad_sales.csv", "data/eligibility.csv"]
     for file in csv_files:
         if os.path.exists(file):
             df = pd.read_csv(file)

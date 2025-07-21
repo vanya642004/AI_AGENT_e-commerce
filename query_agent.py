@@ -8,10 +8,10 @@ import os
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
 llm = HuggingFaceHub(
-    model="google/flan-t5-xl",  
-    temperature=0.0,
-    max_length=512
+    repo_id="google/flan-t5-xl",
+    model_kwargs={"temperature": 0.0, "max_length": 512}
 )
+
 
 db = SQLDatabase.from_uri("sqlite:///ecommerce.db")
 toolkit = SQLDatabaseToolkit(db=db, llm=llm)

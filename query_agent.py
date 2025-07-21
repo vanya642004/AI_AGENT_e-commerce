@@ -4,7 +4,7 @@ import sqlite3
 from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
-from langchain_huggingface import HuggingFaceEndpoint  # ✅ Use supported import
+from langchain_huggingface import HuggingFaceEndpoint
 
 # Set Hugging Face API token
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
@@ -12,8 +12,7 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 # ✅ Setup Hugging Face LLM endpoint correctly
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
-    temperature=0.7,             # ✅ Pass as top-level param
-    max_length=512               # ✅ Avoid model_kwargs dict
+    temperature=0.7  # ✅ Valid argument, removed invalid ones
 )
 
 # ✅ Create SQLite database from CSV if it doesn't exist

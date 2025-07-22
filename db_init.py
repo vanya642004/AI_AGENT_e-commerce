@@ -1,16 +1,16 @@
-import os
-import pandas as pd
 from sqlalchemy import create_engine
+import pandas as pd
+from typing import Dict
 
-def init_db(db_path: str = "ecom.db", data_dir: str = "data"):
-    engine = create_engine(f"sqlite:///{db_path}")
-    tables = {
-        "total_sales.csv": "total_sales",
-        "ad_sales.csv": "ad_sales",
-        "eligibility.csv": "eligibility",
-    }
-    for fname, table in tables.items():
-        path = os.path.join(data_dir, fname)
-        df = pd.read_csv(path)
-        df.to_sql(table, engine, if_exists="replace", index=False)
+
+def init_db_from_dfs(dfs: Dict[str, pd.DataFrame]):
+    """
+    Create an in-memory SQLite database and load each DataFrame as a table.
+    Table names are derived from the filename (without .csv).
+    """
+    engine = create_engine("sqlite:///:memory:")
+    for fname, df in dfs.items():
+        # derive table name
+        table = fname.rsplit('.', 1)[0].replace(' ', '_').lower()
+        df.to_sql(table, engine, if_exists='replace', index=False)
     return engine

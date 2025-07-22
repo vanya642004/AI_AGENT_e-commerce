@@ -15,8 +15,8 @@ if query:
         except Exception as e:
             st.error(f"Error: {e}")
         else:
-            st.subheader("Generated SQL")
+            st.subheader("🔍 Generated SQL")
             st.code(sql, language="sql")
-            st.subheader("Results")
+            st.subheader("📊 Results")
             st.dataframe(df)
 

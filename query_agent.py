@@ -16,25 +16,24 @@ llm = HuggingFaceEndpoint(
     temperature=0.0
 )
 
+# 3) Core query logic: generate SQL, execute it, return both SQL and DataFrame
+
 def answer_query(question: str) -> tuple[str, pd.DataFrame]:
-    """
-    Given a natural‑language question, uses the LLM to generate exactly one
-    SQLite SQL query, then runs it against ecommerce.db and returns (sql, df).
-    """
+    # Build the prompt for SQL generation
     prompt = (
         "You are an expert SQL generator. "
         "Given a user question, generate exactly one valid SQLite SQL query "
         "using the tables in ecommerce.db (total_sales, ad_sales, eligibility). "
-        "Output only the SQL query, no explanation.\n"
+        "Output only the SQL query without explanation.\n"
         f"Question: {question}\n"
         "SQL:"
     )
 
-    # 3) Generate SQL
+    # Generate the SQL query via the LLM
     result = llm.generate([prompt])
     sql = result.generations[0][0].text.strip().strip('";')
 
-    # 4) Execute it
+    # Execute the SQL against the SQLite database
     conn = sqlite3.connect("ecommerce.db")
     try:
         df = pd.read_sql_query(sql, conn)

@@ -5,6 +5,7 @@ from langchain_community.utilities import SQLDatabase
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
 from langchain.agents import initialize_agent
 from langchain_huggingface import HuggingFaceEndpoint
+from langchain.agents.agent import AgentExecutor
 
 # Set Hugging Face API token
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
@@ -12,7 +13,7 @@ os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 # ✅ Setup Hugging Face LLM endpoint correctly
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
-    temperature=0.7
+    temperature=0.7  # ✅ Valid argument
 )
 
 # ✅ Create SQLite database from CSV if it doesn't exist
@@ -34,21 +35,29 @@ try:
 except Exception as e:
     raise RuntimeError(f"Database connection failed: {e}")
 
-# ✅ Initialize SQL agent
+# ✅ Initialize SQL agent with parsing error handling
 try:
-    agent_executor = initialize_agent(
+    agent_executor: AgentExecutor = initialize_agent(
         tools=toolkit.get_tools(),
         llm=llm,
         agent="zero-shot-react-description",
         verbose=True,
-        handle_parsing_errors=True  # ✅ Added to prevent StopIteration from crashing
+        handle_parsing_errors=True,
+        return_intermediate_steps=True
     )
 except Exception as e:
     raise RuntimeError("Agent initialization failed. Check LLM and tools.") from e
 
-# ✅ Final query handler
+# ✅ Final query handler with SQL display
 def answer_query(question: str) -> str:
     try:
-        return agent_executor.run(question)
+        result = agent_executor.invoke({"input": question})
+        sql_generated = ""
+        for step in result.get("intermediate_steps", []):
+            if "sql_query" in str(step):
+                sql_generated = str(step)
+                break
+        final_output = result.get("output", "No output generated.")
+        return f"**Generated SQL:**\n```sql\n{sql_generated}```\n\n**Answer:**\n{final_output}"
     except Exception as e:
         raise RuntimeError("Query execution failed. Ensure prompt and LLM are correctly aligned.") from e

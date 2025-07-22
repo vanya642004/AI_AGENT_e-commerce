@@ -3,40 +3,35 @@ import sqlite3
 import pandas as pd
 from langchain_huggingface import HuggingFaceEndpoint
 
-# Initialize Hugging Face API token
+# Load your HF token however you prefer; here we pull from ENV
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-# Create or connect to the SQLite database (ensure CSVs are loaded)
 DB_PATH = "ecommerce.db"
 
-# Initialize the LLM endpoint
+# 1) Initialize your LLM
 llm = HuggingFaceEndpoint(
-    repo_id="google/flan-t5-xl",  # or any compatible HF model
-    temperature=0.0,                # deterministic SQL
+    repo_id="google/flan-t5-xl",
+    temperature=0.0,   # deterministic SQL generation
 )
-
 
 def answer_query(question: str):
     """
-    Given a user question, generate a SQL query using the LLM,
-    execute it against the ecommerce.db SQLite database, and return
-    the SQL string and result DataFrame.
+    1) Ask the LLM to generate a single valid SQLite SQL query.
+    2) Run that query against ecommerce.db.
+    3) Return the SQL string and the pandas DataFrame.
     """
-    # 1) Prompt LLM to generate SQL
     prompt = (
-        "You are an expert SQL generator for SQLite."
-        " Given the tables total_sales, ad_sales, eligibility, "
-        "produce a single valid SQL query that answers the user question."
-        " Only output the SQL, without explanation.\n"
+        "You are an expert SQL generator for SQLite. "
+        "Given tables total_sales, ad_sales, eligibility, write a single valid SQL query answering the user. "
+        "Output ONLY the SQL (no explanation).\n"
         f"Question: {question}\nSQL:"
     )
-    # Invoke the LLM (raw response)
-    raw_sql = llm.invoke([prompt])["generations"][0][0]["text"]
+    # invoke() returns a dict with generations
+    out = llm.invoke([prompt])
+    raw_sql = out["generations"][0][0]["text"]
+    sql = raw_sql.strip().strip("`").strip('"')
 
-    # 2) Clean up the SQL string
-    sql = raw_sql.strip().strip('"').strip('`').strip()
-
-    # 3) Execute against SQLite
+    # execute
     conn = sqlite3.connect(DB_PATH)
     try:
         df = pd.read_sql_query(sql, conn)

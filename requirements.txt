@@ -1,6 +1,7 @@
-streamlit>=1.0
+streamlit
 pandas
+sqlalchemy
+llama-cpp-python
 langchain
-langchain-huggingface
-huggingface-hub
-
+flask
+matplotlib

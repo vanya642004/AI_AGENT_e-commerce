@@ -1,25 +1,18 @@
-from fastapi import FastAPI
-from query_agent import answer_query
-from fastapi.responses import StreamingResponse
-import time
+from flask import Flask, request, jsonify
+from db_init import init_db
+from query_agent import get_chain
 
-app = FastAPI()
+app = Flask(__name__)
+# Initialize once
+engine = init_db()
+chain = get_chain(engine)
 
-@app.on_event("startup")
-def startup_event():
-    # Ensure DB loaded
-    from db_init import load_data
-    load_data()
+@app.route("/query", methods=["POST"])
+def query_endpoint():
+    payload = request.get_json() or {}
+    q = payload.get("query", "")
+    answer = chain.run(q)
+    return jsonify({"answer": answer})
 
-@app.get("/ask")
-def ask_question(q: str):
-    answer = answer_query(q)
-    return {"answer": answer}
-
-@app.get("/ask/stream")
-def ask_question_stream(q: str):
-    answer = answer_query(q)
-    def streamer():
-        for word in answer.split():
-            yield word + " "; time.sleep(0.05)
-    return StreamingResponse(streamer(), media_type="text/plain")
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=5000)

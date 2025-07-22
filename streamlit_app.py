@@ -1,35 +1,37 @@
 import streamlit as st
+from sqlalchemy import text
 from db_init import init_db
-from query_agent import get_chain
+from query_agent import LlamaSQLAgent
 from utils import display_chart
 
-# Page configuration
-st.set_page_config(
-    page_title="E‑com Data Chatbot",
-    layout="centered",
-)
-
+# Page setup
+st.set_page_config(page_title="E‑com Data Chatbot", layout="centered")
 st.title("📊 E-commerce Data Chatbot")
 
-# Initialize DB and LLM→SQL chain
+# Init
 engine = init_db()
-chain = get_chain(engine)
+agent = LlamaSQLAgent(engine)
 
-# Session history
+# History
 if "history" not in st.session_state:
     st.session_state.history = []
 
-# User input
-query = st.text_input("Ask me about your e-commerce data:")
+# Input
+query = st.text_input("Ask me about your data:")
 if query:
     st.session_state.history.append({"role": "user", "content": query})
-    with st.spinner("Processing..."):
-        response = chain.run(query)
-    st.session_state.history.append({"role": "assistant", "content": response})
+    with st.spinner("Thinking..."):
+        sql, df = agent.run(query)
+    # Record assistant turn
+    st.session_state.history.append({"role": "assistant", "content": f"SQL: `{sql}`"})
+    st.session_state.history.append({"role": "assistant", "content": df.to_markdown()})
+    # Chart if numeric
+    st.session_state.history.append({"role": "assistant", "content": {"chart": df}})
 
-# Display chat
+# Display
 for msg in st.session_state.history:
-    role = msg["role"]
-    content = msg["content"]
-    with st.chat_message(role):
-        st.write(content)
+    if msg["role"] == "assistant" and isinstance(msg["content"], dict) and "chart" in msg["content"]:
+        display_chart(msg["content"]["chart"])
+    else:
+        with st.chat_message(msg["role"]):
+            st.write(msg["content"])

@@ -9,11 +9,14 @@ st.title("E-commerce Data Question & Answer Agent")
 
 query = st.text_input("Ask a question about your e-commerce data:")
 if query:
-    with st.spinner("Generating SQL & running it…"):
+    with st.spinner("Generating SQL & executing..."):
         try:
-            result_md = answer_query(query)
-            st.markdown(result_md, unsafe_allow_html=True)
+            sql, df = answer_query(query)
         except Exception as e:
-            st.error(f"Something went wrong: {e}")
-
+            st.error(f"Error: {e}")
+        else:
+            st.subheader("Generated SQL")
+            st.code(sql, language="sql")
+            st.subheader("Results")
+            st.dataframe(df)
 

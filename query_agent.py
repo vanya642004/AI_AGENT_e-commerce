@@ -1,3 +1,4 @@
+# query_agent.py
 import os
 import sqlite3
 import pandas as pd
@@ -16,8 +17,6 @@ llm = HuggingFaceEndpoint(
     temperature=0.0
 )
 
-# 3) Core query logic: generate SQL, execute it, return both
-
 def answer_query(question: str) -> str:
     # 3a) Prompt to translate to SQL
     prompt = (
@@ -27,7 +26,6 @@ def answer_query(question: str) -> str:
         f"Question: {question}\n"
         "SQL:"
     )
-    # call the LLM to get SQL
     llm_result = llm.generate([prompt])
     sql = llm_result.generations[0][0].text.strip().strip('"')
 

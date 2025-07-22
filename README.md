@@ -1,21 +1,23 @@
 ```markdown
-# E-commerce Data Chatbot
+# E-commerce CSV Query Agent
 
-A local Streamlit chatbot powered by a GGML Llama model that converts user questions into SQL, queries your e-commerce database, and returns answers (with optional charts).
+A Streamlit app that lets you upload any number of CSV files, uses a local GGML Llama model to translate natural‑language questions into SQL, queries the uploaded data, and presents answers (with optional charts).
 
 ## Setup
 1. Clone this repo.
-2. Add CSVs to `data/` and place `ggml-model.bin` in `models/`.
+2. Place a GGML Llama model binary as `models/ggml-model.bin`.
 3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-4. To launch Streamlit UI:
+4. Run the app:
    ```bash
    streamlit run streamlit_app.py
    ```
-5. (Optional) To serve an API endpoint:
-   ```bash
-   python app.py
-   ```
+
+## Usage
+- On startup, upload one or more CSV files via the file uploader.
+- Ask any question about your data; the app will generate and run SQL against all tables.
+- View the generated SQL, tabular results, and charts for numeric outputs.
 ```
+

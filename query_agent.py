@@ -1,54 +1,49 @@
 import os
-from db_init import ensure_database
+import sqlite3
+import pandas as pd
 from langchain_huggingface import HuggingFaceEndpoint
-from langchain_community.utilities import SQLDatabase
-from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain.agents import initialize_agent
 
-# 1) Load CSVs into SQLite database
-csv_files = [
-    "total_sales.csv",
-    "ad_sales.csv",
-    "eligibility.csv",
-]
+# 1) Load CSVs into SQLite
+from db_init import ensure_database
+csv_files = ["data/total_sales.csv", "data/ad_sales.csv", "data/eligibility.csv"]
 ensure_database(csv_files, db_path="ecommerce.db")
 
-# 2) Initialize LLM endpoint
+# 2) Setup LLM
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
-    temperature=0.7
+    temperature=0.0
 )
 
-# 3) Setup SQLDatabase and toolkit
-db = SQLDatabase.from_uri("sqlite:///ecommerce.db")
-toolkit = SQLDatabaseToolkit(db=db, llm=llm)
-
-# 4) Initialize agent with intermediate steps
-agent_executor = initialize_agent(
-    tools=toolkit.get_tools(),
-    llm=llm,
-    agent="zero-shot-react-description",
-    verbose=False,
-    return_intermediate_steps=True
-)
-
-# 5) Query handler
+# 3) Core query logic: generate SQL, execute it, return both
 
 def answer_query(question: str) -> str:
-    """
-    Executes the question, extracts the generated SQL, and returns both SQL and answer.
-    """
-    result = agent_executor({"input": question})
-    # Extract SQL from first intermediate step
-    sql_snippet = "-- no SQL found --"
-    for action, _ in result["intermediate_steps"]:
-        if hasattr(action, "tool_input") and action.tool_input.strip().upper().startswith("SELECT"):
-            sql_snippet = action.tool_input.strip()
-            break
+    # 3a) Prompt to translate to SQL
+    prompt = (
+        "You are an expert SQL generator. "
+        "Given a user question, generate a single valid SQLite SQL query using tables: total_sales, ad_sales, eligibility. "
+        "Only output the SQL query, without explanation.\n"
+        f"Question: {question}\nSQL:"
+    )
+    # call the LLM
+    sql = llm.generate([prompt]).generations[0][0].text.strip().strip('"')
 
-    answer = result.get("output", "<no answer>")
+    # 3b) Run the SQL against the DB
+    conn = sqlite3.connect("ecommerce.db")
+    try:
+        df = pd.read_sql_query(sql, conn)
+    except Exception as e:
+        return f"**Generated SQL:**\n```sql
+{sql}
+```\n**Error running SQL:** {e}"
+    finally:
+        conn.close()
+
+    # 3c) Format output as markdown table
+    markdown_table = df.to_markdown(index=False)
     return (
-        f"**Generated SQL:**\n```sql\n{sql_snippet}\n```\n"
-        f"**Answer:**\n{answer}"
+        f"**Generated SQL:**\n```sql
+{sql}
+```\n"
+        f"**Result:**\n{markdown_table}"
     )

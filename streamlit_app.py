@@ -1,19 +1,24 @@
-# streamlit_app.py
-import streamlit as st
-from query_agent import answer_query
+import os
+import sqlite3
+import pandas as pd
 
-st.set_page_config(
-    page_title="E-commerce Data Q&A",
-    layout="wide",
-)
-st.title("E-commerce Data Question & Answer Agent")
 
-query = st.text_input("Ask a question about your e-commerce data:")
-if query:
-    with st.spinner("Generating SQL + Answer..."):
-        try:
-            res = answer_query(query)
-        except Exception as e:
-            st.error(f"Error: {e}")
-        else:
-            st.markdown(res, unsafe_allow_html=True)
+def ensure_database(csv_paths, db_path="ecommerce.db"):
+    """
+    Reads each CSV file in csv_paths into a SQLite database at db_path.
+    Each CSV becomes a table named after the CSV filename (without extension).
+    Always recreates the DB to pick up CSV changes.
+    """
+    if os.path.exists(db_path):
+        os.remove(db_path)
+
+    conn = sqlite3.connect(db_path)
+    for csv_file in csv_paths:
+        if not os.path.exists(csv_file):
+            raise FileNotFoundError(f"CSV file not found: {csv_file}")
+        df = pd.read_csv(csv_file)
+        table_name = os.path.splitext(os.path.basename(csv_file))[0]
+        table_name = table_name.strip().lower().replace(" ", "_")
+        df.to_sql(table_name, conn, if_exists="replace", index=False)
+    conn.commit()
+    conn.close()

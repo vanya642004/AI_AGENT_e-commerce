@@ -2,9 +2,7 @@ import os
 import pandas as pd
 from sqlalchemy import create_engine
 
-
 def init_db(db_path: str = "ecom.db", data_dir: str = "data"):
-    # Create SQLite engine and load CSVs into tables
     engine = create_engine(f"sqlite:///{db_path}")
     tables = {
         "total_sales.csv": "total_sales",

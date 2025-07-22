@@ -4,14 +4,13 @@ import pandas as pd
 
 def ensure_database(csv_paths, db_path="ecommerce.db"):
     """
-    Read each CSV in `csv_paths` into SQLite at `db_path`.
-    Overwrite any existing DB so you pick up changes.
+    Reads each CSV in `csv_paths` into a SQLite database at `db_path`.
+    Overwrites tables if they already exist.
     """
-    # 1) remove old DB
+    # Recreate DB to pick up changes
     if os.path.exists(db_path):
         os.remove(db_path)
 
-    # 2) write each CSV as its own table
     conn = sqlite3.connect(db_path)
     for csv_file in csv_paths:
         if not os.path.exists(csv_file):
@@ -24,4 +23,5 @@ def ensure_database(csv_paths, db_path="ecommerce.db"):
             .replace(" ", "_")
         )
         df.to_sql(table, conn, if_exists="replace", index=False)
+    conn.commit()
     conn.close()

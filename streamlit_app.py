@@ -1,3 +1,4 @@
+# streamlit_app.py
 import streamlit as st
 from query_agent import answer_query
 
@@ -9,10 +10,10 @@ st.title("E-commerce Data Question & Answer Agent")
 
 query = st.text_input("Ask a question about your e-commerce data:")
 if query:
-    with st.spinner("Running SQL + LLM..."):
+    with st.spinner("Generating SQL + Answer..."):
         try:
-            response = answer_query(query)
+            res = answer_query(query)
         except Exception as e:
-            st.error(e)
+            st.error(f"Error: {e}")
         else:
-            st.markdown(response, unsafe_allow_html=True)
+            st.markdown(res, unsafe_allow_html=True)

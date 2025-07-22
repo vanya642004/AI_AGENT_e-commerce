@@ -5,11 +5,11 @@ import glob
 from langchain_huggingface import HuggingFaceEndpoint
 from db_init import ensure_database
 
-# 1) Load all CSVs in root into SQLite
-csv_files = glob.glob("*.csv")  # adjust if files live in a subfolder
+# 1) Load all CSVs in data/ into SQLite
+csv_files = glob.glob("data/*.csv")
 ensure_database(csv_files, db_path="ecommerce.db")
 
-# 2) Setup LLM using HuggingFace endpoint
+# 2) Setup LLM
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
@@ -23,7 +23,7 @@ def answer_query(question: str) -> str:
     prompt = (
         "You are an expert SQL generator. "
         "Generate exactly one valid SQLite SQL query using the tables in ecommerce.db. "
-        "Only output the SQL query without any explanation.\n"
+        "Output only the SQL query without any explanation.\n"
         f"Question: {question}\n"
         "SQL:"
     )
@@ -44,8 +44,8 @@ def answer_query(question: str) -> str:
     conn.close()
 
     # 3c) Render results as Markdown table
-    markdown_table = df.to_markdown(index=False)
+    table_md = df.to_markdown(index=False)
     return (
-        f"**Generated SQL:**\n```sql\n{sql}\n```\n"
-        f"**Result:**\n{markdown_table}"
+        f"**Generated SQL:**\n```sql\n{sql}\n```\n\n"
+        f"**Result:**\n{table_md}"
     )

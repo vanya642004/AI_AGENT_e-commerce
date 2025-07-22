@@ -1,15 +1,18 @@
-import os, sqlite3, pandas as pd
+import os
+import pandas as pd
+from sqlalchemy import create_engine
 
-def ensure_database(csv_paths, db_path="ecommerce.db"):
-    # create folder if needed
-    parent = os.path.dirname(db_path)
-    if parent:
-        os.makedirs(parent, exist_ok=True)
-    conn = sqlite3.connect(db_path)
-    for csv in csv_paths:
-        if not os.path.exists(csv):
-            raise FileNotFoundError(f"{csv} not found")
-        df = pd.read_csv(csv)
-        name = os.path.splitext(os.path.basename(csv))[0].lower()
-        df.to_sql(name, conn, if_exists="replace", index=False)
-    conn.close()
+
+def init_db(db_path: str = "ecom.db", data_dir: str = "data"):
+    # Create SQLite engine and load CSVs into tables
+    engine = create_engine(f"sqlite:///{db_path}")
+    tables = {
+        "total_sales.csv": "total_sales",
+        "ad_sales.csv": "ad_sales",
+        "eligibility.csv": "eligibility",
+    }
+    for fname, table in tables.items():
+        path = os.path.join(data_dir, fname)
+        df = pd.read_csv(path)
+        df.to_sql(table, engine, if_exists="replace", index=False)
+    return engine

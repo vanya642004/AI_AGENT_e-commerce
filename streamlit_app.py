@@ -1,32 +1,30 @@
-from query_agent import answer_query
+import streamlit as st
+from streamlit_chat import message
+from db_init import init_db
+from query_agent import get_chain
+from utils import display_chart
 
-# Configure the Streamlit page
+# Page config
 st.set_page_config(
-    page_title="E-commerce Data Q&A",
-    layout="wide",
-    initial_sidebar_state="expanded",
+    page_title="E‑com Data Chatbot",
+    layout="centered",
 )
+st.title("📊 E-commerce Data Chatbot")
 
-# Page title
-st.title("E-commerce Data Question & Answer Agent")
+# Bootstrap
+engine = init_db()
+chain = get_chain(engine)
+if "history" not in st.session_state:
+    st.session_state.history = []
 
 # User input
-query = st.text_import streamlit as st
-input("Ask a question about your e-commerce data:")
-
+query = st.text_input("Ask me about your e-commerce data:")
 if query:
-    with st.spinner("Generating SQL and fetching results..."):
-        try:
-            # Generate SQL and execute query
-            sql, df = answer_query(query)
+    st.session_state.history.append((query, True))
+    with st.spinner("Processing..."):
+        resp = chain.run(query)
+    st.session_state.history.append((resp, False))
 
-            # Display the generated SQL
-            st.subheader("Generated SQL Query")
-            st.code(sql, language="sql")
-
-            # Display the query results
-            st.subheader("Query Results")
-            st.dataframe(df)
-        except Exception as e:
-            # Show any errors that occur
-            st.error(f"Error: {e}")
+# Display conversation
+for text, is_user in st.session_state.history:
+    message(text, is_user=is_user)

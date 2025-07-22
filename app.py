@@ -3,14 +3,12 @@ from db_init import init_db
 from query_agent import get_chain
 
 app = Flask(__name__)
-# Initialize once
 engine = init_db()
 chain = get_chain(engine)
 
 @app.route("/query", methods=["POST"])
 def query_endpoint():
-    payload = request.get_json() or {}
-    q = payload.get("query", "")
+    q = request.json.get("query", "")
     answer = chain.run(q)
     return jsonify({"answer": answer})
 

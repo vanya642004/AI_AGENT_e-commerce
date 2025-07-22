@@ -5,8 +5,8 @@ import glob
 from langchain_huggingface import HuggingFaceEndpoint
 from db_init import ensure_database
 
-# 1) Load all CSVs in data/ into SQLite
-csv_files = glob.glob("data/*.csv")
+# 1) Load all CSVs in root into SQLite
+csv_files = glob.glob("*.csv")  # adjust if files live in a subfolder
 ensure_database(csv_files, db_path="ecommerce.db")
 
 # 2) Setup LLM using HuggingFace endpoint

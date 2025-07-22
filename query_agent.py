@@ -22,8 +22,7 @@ def answer_query(question: str) -> str:
     prompt = (
         "You are an expert SQL generator. "
         "Given a user question, generate a single valid SQLite SQL query using tables: total_sales, ad_sales, eligibility. "
-        "Only output the SQL query, without explanation.
-"
+        "Only output the SQL query, without explanation."
         f"Question: {question}
 SQL:"
     )

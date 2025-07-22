@@ -1,14 +1,15 @@
 import os
 import sqlite3
 import pandas as pd
+import glob
 from langchain_huggingface import HuggingFaceEndpoint
-
-# 1) Load CSVs into SQLite
 from db_init import ensure_database
-csv_files = ["data/total_sales.csv", "data/ad_sales.csv", "data/eligibility.csv"]
+
+# 1) Load all CSVs in data/ into SQLite
+csv_files = glob.glob("data/*.csv")
 ensure_database(csv_files, db_path="ecommerce.db")
 
-# 2) Setup LLM
+# 2) Setup LLM using HuggingFace endpoint
 os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 llm = HuggingFaceEndpoint(
     repo_id="google/flan-t5-xl",
@@ -21,31 +22,29 @@ def answer_query(question: str) -> str:
     # 3a) Prompt to translate to SQL
     prompt = (
         "You are an expert SQL generator. "
-        "Given a user question, generate a single valid SQLite SQL query using tables: total_sales, ad_sales, eligibility. "
-        "Only output the SQL query, without explanation. "
+        "Generate exactly one valid SQLite SQL query using the tables in ecommerce.db. "
+        "Only output the SQL query without any explanation.\n"
         f"Question: {question}\n"
         "SQL:"
     )
-    # call the LLM
-    llm_output = llm.generate([prompt])
-    # extract generated SQL text
-    sql = llm_output.generations[0][0].text.strip().strip('"')
+    # call the LLM to get SQL
+    llm_result = llm.generate([prompt])
+    sql = llm_result.generations[0][0].text.strip().strip('"')
 
-    # 3b) Run the SQL against the DB
+    # 3b) Execute the SQL
     conn = sqlite3.connect("ecommerce.db")
     try:
         df = pd.read_sql_query(sql, conn)
-    except Exception as e:
+    except Exception as exec_err:
         conn.close()
         return (
             f"**Generated SQL:**\n```sql\n{sql}\n```\n"
-            f"**Error running SQL:** {e}"
+            f"**Error running SQL:** {exec_err}"
         )
     conn.close()
 
-    # 3c) Format output as markdown table
+    # 3c) Render results as Markdown table
     markdown_table = df.to_markdown(index=False)
-    # Combine SQL and results in a single markdown block
     return (
         f"**Generated SQL:**\n```sql\n{sql}\n```\n"
         f"**Result:**\n{markdown_table}"

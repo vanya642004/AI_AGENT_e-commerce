@@ -1,6 +1,5 @@
 [server]
 headless = true
-port = 8501  # ✅ Use a default port (Streamlit Cloud overrides it automatically)
 enableCORS = false
-
+port = 8501
 

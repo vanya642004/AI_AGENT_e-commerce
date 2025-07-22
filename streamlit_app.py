@@ -1,31 +1,36 @@
+# streamlit_app.py
 import streamlit as st
 from query_agent import answer_query
+import pandas as pd
 
-# Configure the Streamlit page
+# === Page config ===
 st.set_page_config(
-    page_title="E-commerce Data Q&A Agent",
+    page_title="E-commerce Data Q&A",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
 st.title("E-commerce Data Question & Answer Agent")
+st.write(
+    "Ask a natural‑language question about your `total_sales`, `ad_sales`, or `eligibility` tables, "
+    "and I'll show you the SQL I'm running and the answers."
+)
 
-# Input: natural language question
-query = st.text_input("Ask a question about your e-commerce data:")
+# === User input ===
+query = st.text_input("✏️  Your question:")
 
 if query:
-    with st.spinner("Generating SQL query and retrieving data..."):
+    with st.spinner("⏳ Generating SQL and fetching results..."):
         try:
-            # Call our query_agent, which returns (sql_string, DataFrame)
             sql, df = answer_query(query)
-
-            # Display the generated SQL
-            st.markdown("**Generated SQL:**")
+        except Exception as e:
+            st.error(f"❗ Something went wrong:\n```\n{e}\n```")
+        else:
+            st.subheader("🔍 Generated SQL")
             st.code(sql, language="sql")
 
-            # Display result DataFrame
-            st.markdown("**Query Results:**")
-            st.dataframe(df)
+            if isinstance(df, pd.DataFrame) and not df.empty:
+                st.subheader("📊 Query Results")
+                st.dataframe(df)
+            else:
+                st.info("✅ Query ran successfully, but returned no rows.")
 
-        except Exception as e:
-            st.error(f"Error: {e}")

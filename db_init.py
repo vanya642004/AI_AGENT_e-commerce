@@ -21,4 +21,3 @@ def ensure_database(csv_paths, db_path="ecommerce.db"):
         df.to_sql(table_name, conn, if_exists="replace", index=False)
     conn.commit()
     conn.close()
-

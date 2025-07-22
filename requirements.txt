@@ -2,6 +2,4 @@ streamlit
 pandas
 sqlalchemy
 llama-cpp-python
-langchain
-flask
 matplotlib

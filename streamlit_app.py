@@ -1,30 +1,35 @@
 import streamlit as st
-from streamlit_chat import message
 from db_init import init_db
 from query_agent import get_chain
 from utils import display_chart
 
-# Page config
+# Page configuration
 st.set_page_config(
     page_title="E‑com Data Chatbot",
     layout="centered",
 )
+
 st.title("📊 E-commerce Data Chatbot")
 
-# Bootstrap
+# Initialize DB and LLM→SQL chain
 engine = init_db()
 chain = get_chain(engine)
+
+# Session history
 if "history" not in st.session_state:
     st.session_state.history = []
 
 # User input
 query = st.text_input("Ask me about your e-commerce data:")
 if query:
-    st.session_state.history.append((query, True))
+    st.session_state.history.append({"role": "user", "content": query})
     with st.spinner("Processing..."):
-        resp = chain.run(query)
-    st.session_state.history.append((resp, False))
+        response = chain.run(query)
+    st.session_state.history.append({"role": "assistant", "content": response})
 
-# Display conversation
-for text, is_user in st.session_state.history:
-    message(text, is_user=is_user)
+# Display chat
+for msg in st.session_state.history:
+    role = msg["role"]
+    content = msg["content"]
+    with st.chat_message(role):
+        st.write(content)

@@ -1,27 +1,41 @@
+# query_agent.py
 import os
 import sqlite3
 import pandas as pd
+from langchain_huggingface import HuggingFaceEndpoint
 
-def ensure_database(csv_paths, db_path="ecommerce.db"):
-    """
-    Reads each CSV in `csv_paths` into a SQLite database at `db_path`.
-    Overwrites tables if they already exist.
-    """
-    # Recreate DB to pick up changes
-    if os.path.exists(db_path):
-        os.remove(db_path)
+# Ensure your HF token is set in the ENV
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = os.getenv("HUGGINGFACEHUB_API_TOKEN")
 
-    conn = sqlite3.connect(db_path)
-    for csv_file in csv_paths:
-        if not os.path.exists(csv_file):
-            raise FileNotFoundError(f"CSV file not found: {csv_file}")
-        df = pd.read_csv(csv_file)
-        table = (
-            os.path.splitext(os.path.basename(csv_file))[0]
-            .strip()
-            .lower()
-            .replace(" ", "_")
-        )
-        df.to_sql(table, conn, if_exists="replace", index=False)
-    conn.commit()
-    conn.close()
+# Initialize the HF LLM
+llm = HuggingFaceEndpoint(
+    repo_id="google/flan-t5-xl",
+    temperature=0.0
+)
+
+DB_PATH = "ecommerce.db"
+
+def answer_query(question: str) -> tuple[str, pd.DataFrame]:
+    """
+    1) Generate a single valid SQL statement for the question.
+    2) Run it against ecommerce.db.
+    3) Return (sql, DataFrame).
+    """
+    prompt = (
+        "You are an expert SQL generator. "
+        "Given this question and tables total_sales, ad_sales, eligibility, "
+        "output exactly one valid SQL query (no explanation).\n\n"
+        f"Question: {question}\nSQL:"
+    )
+    raw_sql = llm(prompt)
+    sql = (
+        raw_sql.replace("```sql", "").replace("```", "").strip()
+    )
+
+    conn = sqlite3.connect(DB_PATH)
+    try:
+        df = pd.read_sql_query(sql, conn)
+    finally:
+        conn.close()
+
+    return sql, df
